@@ -23,9 +23,7 @@ GOLD_TYPES = {
     "10K": 10 / 24, "14K": 14 / 24, "18K": 18 / 24, "22K": 22 / 24, "24K": 1.0,
 }
 
-# IDs de Emojis Personalizados
-EMOJI_TITULO = "AgADZAUAAncUCEU" # ID del nuevo sticker/emoji para el título
-EMOJI_CHISPA = "5917773753390994274" # ID del anterior (chispas)
+CUSTOM_EMOJI = "5917773753390994274"
 
 def get_gold_price_ounce():
     url = "https://www.goldapi.io/api/XAU/USD"
@@ -45,10 +43,8 @@ def get_gold_price_ounce():
 async def main_menu(update: Update):
     keyboard = [["🥇 CALCULAR VALOR 🥇"], ["📈 TASA EN TIEMPO REAL 💸"]]
     reply_markup = ReplyKeyboardMarkup(keyboard, resize_keyboard=True)
-    
-    # Título principal con el nuevo emoji personalizado
     text = (
-        f"<tg-emoji emoji-id='{EMOJI_TITULO}'>💎</tg-emoji> <b>JCS GOLD CALCULATOR</b> <tg-emoji emoji-id='{EMOJI_TITULO}'>💎</tg-emoji>\n\n"
+        "<b>💎 JCS GOLD CALCULATOR | PREMIUM 💎</b>\n\n"
         "✨ <b>Bienvenido al cotizador exclusivo.</b>\n"
         "» Conectado con los mercados globales.\n\n"
         "👇 <i>Por favor, seleccione una acción:</i>"
@@ -68,7 +64,7 @@ async def handle_messages(update: Update, context: ContextTypes.DEFAULT_TYPE):
     text = update.message.text
     user_data = context.user_data
     
-    # Formato de fecha y hora optimizado
+    # Formato de fecha y hora mejorado
     fecha = datetime.now().strftime("%d / %m / 2026")
     hora = datetime.now().strftime("%I:%M:%S %p")
 
@@ -104,10 +100,10 @@ async def handle_messages(update: Update, context: ContextTypes.DEFAULT_TYPE):
             if price:
                 gram_price = (price / 31.1035) * GOLD_TYPES[user_data["gold_type"]]
                 total_real = grams * gram_price
-                total_compra = total_real * 0.90
+                total_compra = total_real * 0.90 # Margen 10%
                 
                 res = (
-                    f"<tg-emoji emoji-id='{EMOJI_CHISPA}'>✨</tg-emoji> <b>COTIZACIÓN</b>\n"
+                    f"<tg-emoji emoji-id='{CUSTOM_EMOJI}'>✨</tg-emoji> <b>COTIZACIÓN</b>\n"
                     f"📅 <code>{fecha}</code>\n"
                     f"⏰ <code>{hora}</code>\n\n"
                     f"📦 <b>Quilate:</b> <code>{user_data['gold_type']}</code>\n"
@@ -133,3 +129,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+    
