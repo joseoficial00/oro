@@ -60,7 +60,7 @@ async def purity_menu(update: Update):
     keyboard = [
         ["⚡ 10K", "⚡ 14K"],
         ["🌟 18K", "🌟 22K"],
-        ["🏆 24K (Puro)"],
+        ["🏆 24K "],
         ["⬅️ VOLVER AL MENÚ"]
     ]
     reply_markup = ReplyKeyboardMarkup(keyboard, resize_keyboard=True)
