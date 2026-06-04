@@ -48,7 +48,6 @@ async def main_menu(update: Update):
     
     text = (
         "💎 *JCS GOLD CALCULATOR | PREMIUM* 💎\n"
-        "\n"
         "✨ *Bienvenido al cotizador exclusivo.*\n"
         "» Conectado con los mercados globales.\n"
         "» Precisión matemática garantizada.\n\n"
@@ -88,7 +87,6 @@ async def handle_messages(update: Update, context: ContextTypes.DEFAULT_TYPE):
             msg = (
                 f"📊 *TASA OFICIAL EN TIEMPO REAL*\n"
                 f"⏱ `{now}`\n"
-                f"\n\n"
                 f"» *Valores de Mercado (XAU/USD):*\n"
                 f"🪙 `1 oz (Troy) ` ➜ ` ${price:,.2f} USD `\n"
                 f"🥇 `1g Oro (24K)` ➜ ` ${(price / 31.1035):,.2f} USD `\n\n"
@@ -117,7 +115,6 @@ async def handle_messages(update: Update, context: ContextTypes.DEFAULT_TYPE):
         
         await update.message.reply_text(
             f"👑 *QUILATAJE SELECCIONADO: {gold_type}*\n"
-            f"\n"
             f"✍️ *Envíe la cantidad de gramos en formato numérico.*\n\n"
             f"💡 _Ejemplos: 10 o 5.75_",
             parse_mode="Markdown",
@@ -138,7 +135,6 @@ async def handle_messages(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 res = (
                     f"✨ *COTIZACIÓN PREMIUM EMITIDA*\n"
                     f"⏱ `{now}`\n"
-                    f"\n\n"
                     f"📦 *Pureza:* `{gold_type}`\n"
                     f"⚖️ *Masa Evaluada:* `{grams:,} g`\n"
                     f"💵 *Precio por Gramo:* `${gram_price:,.2f} USD`\n\n"
