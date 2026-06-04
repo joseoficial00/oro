@@ -24,7 +24,7 @@ GOLD_TYPES = {
 }
 
 # ID del emoji personalizado que proporcionaste
-CUSTOM_EMOJI = "5917773753390994274"
+GRAFICA_EMOJI = "5917773753390994274"
 
 def get_gold_price_ounce():
     url = "https://www.goldapi.io/api/XAU/USD"
@@ -130,14 +130,14 @@ async def handle_messages(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 total_compra = total_real * 0.90
                 
                 res = (
-                    f"<tg-emoji emoji-id='{CUSTOM_EMOJI}'>✨</tg-emoji> <b>COTIZACIÓN</b>\n"
+                    f"<tg-emoji emoji-id='{GRAFICA_EMOJI}'>✨</tg-emoji> <b>COTIZACIÓN</b>\n"
                     f"📅 <code>{fecha}</code>\n"
                     f"⏰ <code>{hora}</code>\n\n"
-                    f"📦 <b>Quilate:</b> <code>{user_data['gold_type']}</code>\n"
+                    f"📦 <b>Quilate:</b> <code>{gold_type}</code>\n"
                     f"⚖️ <b>Peso:</b> <code>{grams:,} g</code>\n\n"
                     f"💰 <b>VALOR REAL:</b> <code>${total_real:,.2f} USD</code>\n"
                     f"🤝 <b>PRECIO COMPRA:</b> <code>${total_compra:,.2f} USD</code>\n\n"
-                    f"✍️ <i>Envíe otro peso o presione Volver.</i>"
+                    f"✍️ <i>Envíe otro peso o presione Volver para cambiar de quilate.</i>"
                 )
                 await update.message.reply_text(res, parse_mode="HTML")
             else:
