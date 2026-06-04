@@ -23,7 +23,6 @@ GOLD_TYPES = {
     "10K": 10 / 24, "14K": 14 / 24, "18K": 18 / 24, "22K": 22 / 24, "24K": 1.0,
 }
 
-# ID del emoji personalizado
 CUSTOM_EMOJI = "5917773753390994274"
 
 def get_gold_price_ounce():
@@ -38,27 +37,42 @@ def get_gold_price_ounce():
     return None
 
 # ==========================================
-# INTERFACES
+# INTERFACES PREMIUM (SIN LÍNEAS)
 # ==========================================
 
 async def main_menu(update: Update):
-    keyboard = [["🥇 CALCULAR VALOR 🥇"], ["📈 TASA EN TIEMPO REAL 💸"]]
+    keyboard = [
+        ["🥇 CALCULAR VALOR 🥇"],
+        ["📈 TASA EN TIEMPO REAL 💸"]
+    ]
     reply_markup = ReplyKeyboardMarkup(keyboard, resize_keyboard=True)
+    
     text = (
-        "<b>💎 JCS GOLD CALCULATOR | PREMIUM 💎</b>\n\n"
-        "✨ <b>Bienvenido al cotizador exclusivo.</b>\n"
-        "» Conectado con los mercados globales.\n\n"
-        "👇 <i>Seleccione una opción:</i>"
+        "💎 *JCS GOLD CALCULATOR | PREMIUM* 💎\n\n"
+        "✨ *Bienvenido al cotizador exclusivo.*\n"
+        "» Conectado con los mercados globales.\n"
+        "» Precisión matemática garantizada.\n\n"
+        "👇 _Por favor, seleccione una acción del menú:_ 👇"
     )
-    await update.effective_chat.send_message(text, reply_markup=reply_markup, parse_mode="HTML")
+    await update.effective_chat.send_message(text, reply_markup=reply_markup, parse_mode="Markdown")
 
 async def purity_menu(update: Update):
-    keyboard = [["⚡ 10K", "⚡ 14K"], ["🌟 18K", "🌟 22K"], ["🏆 24K (Puro)"], ["⬅️ VOLVER"]]
+    keyboard = [
+        ["⚡ 10K", "⚡ 14K"],
+        ["🌟 18K", "🌟 22K"],
+        ["🏆 24K (Puro)"],
+        ["⬅️ VOLVER AL MENÚ"]
+    ]
     reply_markup = ReplyKeyboardMarkup(keyboard, resize_keyboard=True)
-    await update.message.reply_text("<b>🏆 SELECCIÓN DE PUREZA</b>\n\nElija el quilataje:", reply_markup=reply_markup, parse_mode="HTML")
+    
+    text = (
+        "🏆 *SELECCIÓN DE PUREZA*\n\n"
+        "Seleccione el quilataje del oro a evaluar:"
+    )
+    await update.message.reply_text(text, reply_markup=reply_markup, parse_mode="Markdown")
 
 # ==========================================
-# GESTIÓN DE MENSAJES
+# GESTIÓN DE PETICIONES
 # ==========================================
 
 async def handle_messages(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -70,12 +84,16 @@ async def handle_messages(update: Update, context: ContextTypes.DEFAULT_TYPE):
         price = get_gold_price_ounce()
         if price:
             msg = (
-                f"📊 <b>TASA EN TIEMPO REAL</b>\n"
-                f"⏱ <code>{now}</code>\n\n"
-                f"🪙 <code>Oz Troy: </code> ➜ <code> ${price:,.2f} USD </code>\n"
-                f"🥇 <code>1g (24K): </code> ➜ <code> ${(price / 31.1035):,.2f} USD </code>"
+                f"📊 *TASA OFICIAL EN TIEMPO REAL*\n"
+                f"⏱ `{now}`\n\n"
+                f"» *Valores de Mercado (XAU/USD):*\n"
+                f"🪙 `1 oz (Troy) ` ➜ ` ${price:,.2f} USD `\n"
+                f"🥇 `1g Oro (24K)` ➜ ` ${(price / 31.1035):,.2f} USD `\n\n"
+                f"⚠️ _La tasa fluctúa según la bolsa internacional._"
             )
-            await update.message.reply_text(msg, parse_mode="HTML")
+            await update.message.reply_text(msg, parse_mode="Markdown")
+        else:
+            await update.message.reply_text("❌ No se pudo sincronizar la tasa.")
 
     elif text == "🥇 CALCULAR VALOR 🥇":
         user_data["step"] = "select_purity"
@@ -87,19 +105,29 @@ async def handle_messages(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     elif user_data.get("step") == "select_purity" and any(q in text for q in GOLD_TYPES):
         gold_type = next(q for q in GOLD_TYPES if q in text)
-        user_data.update({"gold_type": gold_type, "step": "input_grams"})
-        await update.message.reply_text(f"👑 <b>QUILATAJE: {gold_type}</b>\n\n✍️ <b>Envíe los gramos:</b>", parse_mode="HTML")
+        user_data["gold_type"] = gold_type
+        user_data["step"] = "input_grams"
+        
+        await update.message.reply_text(
+            f"👑 *QUILATAJE: {gold_type}*\n\n"
+            f"✍️ *Envíe la cantidad de gramos en formato numérico.*\n\n"
+            f"💡 _Ejemplos: 10 o 5.75_",
+            parse_mode="Markdown",
+            reply_markup=ReplyKeyboardMarkup([["⬅️ VOLVER"]], resize_keyboard=True)
+        )
 
     elif user_data.get("step") == "input_grams":
         try:
             grams = float(text.replace(',', '.'))
+            gold_type = user_data["gold_type"]
             price = get_gold_price_ounce()
+            
             if price:
-                gram_price = (price / 31.1035) * GOLD_TYPES[user_data["gold_type"]]
+                gram_price = (price / 31.1035) * GOLD_TYPES[gold_type]
                 total_real = grams * gram_price
-                total_compra = total_real * 0.90 # Margen del 10%
+                # Cálculo con 10% menos para tu ganancia
+                total_compra = total_real * 0.90
                 
-                # EL EMOJI SOLO EN ESTA PARTE (EL TÍTULO)
                 res = (
                     f"<tg-emoji emoji-id='{CUSTOM_EMOJI}'>✨</tg-emoji> <b>COTIZACIÓN</b>\n"
                     f"📅 <code>{fecha}</code>\n"
@@ -110,9 +138,11 @@ async def handle_messages(update: Update, context: ContextTypes.DEFAULT_TYPE):
                     f"🤝 <b>PRECIO COMPRA:</b> <code>${total_compra:,.2f} USD</code>\n\n"
                     f"✍️ <i>Envíe otro peso o presione Volver.</i>"
                 )
-                await update.message.reply_text(res, parse_mode="HTML")
-        except:
-            await update.message.reply_text("⚠️ Envíe un número válido.")
+                await update.message.reply_text(res, parse_mode="Markdown")
+            else:
+                await update.message.reply_text("❌ Error al obtener precio.")
+        except ValueError:
+            await update.message.reply_text("⚠️ Envíe solo números.")
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_data = context.user_data
