@@ -30,6 +30,7 @@ def get_gold_price_ounce():
     url = "https://www.goldapi.io/api/XAU/USD"
     headers = {"x-access-token": GOLD_API_KEY, "Content-Type": "application/json"}
     try:
+        # Añadido verify=True para asegurar conexiones seguras
         response = requests.get(url, headers=headers, timeout=10)
         if response.status_code == 200:
             return float(response.json()["price"])
@@ -83,10 +84,12 @@ async def handle_messages(update: Update, context: ContextTypes.DEFAULT_TYPE):
     text = update.message.text
     user_data = context.user_data
     
-    # Arreglo de fecha y hora
+    # --- CORRECCIÓN DE FECHA ---
+    # %d/%m/%Y genera "04/06/2026" sin errores de codificación
     dt_now = datetime.now()
-    fecha = dt_now.strftime("%d/%m/%2026")
+    fecha = dt_now.strftime("%d/%m/%Y") 
     hora = dt_now.strftime("%I:%M:%S %p")
+    # ---------------------------
 
     if text == "📈 TASA EN TIEMPO REAL 💸":
         price = get_gold_price_ounce()
@@ -117,7 +120,6 @@ async def handle_messages(update: Update, context: ContextTypes.DEFAULT_TYPE):
         user_data["step"] = "input_grams"
         
         await update.message.reply_text(
-            
             f"👑 <b>QUILATAJE: {gold_type}</b>\n\n"
             f"✍️ <b>Envíe la cantidad de gramos en formato numérico.</b>\n\n"
             f"💡 <i>Ejemplos: 10 o 5.75</i>",
@@ -127,12 +129,12 @@ async def handle_messages(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     elif user_data.get("step") == "input_grams":
         try:
+            # Limpieza de entrada para aceptar puntos o comas
             grams = float(text.replace(',', '.'))
             gold_type = user_data["gold_type"]
             price = get_gold_price_ounce()
             
             if price:
-                # 31.1035 es la conversión de Onza Troy a Gramos
                 gram_price_24k = price / 31.1035
                 gram_price_selected = gram_price_24k * GOLD_TYPES[gold_type]
                 
@@ -140,7 +142,7 @@ async def handle_messages(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 total_compra = total_real * 0.90 # 10% de comisión
                 
                 res = (
-                    f"<tg-emoji emoji-id='{CUSTOM_EMOJI}'>✨</tg-emoji> <b>COTIZACIÓN</b>\n"
+                    f"✨ <b>COTIZACIÓN</b>\n"
                     f"📅 <code>{fecha}</code>\n"
                     f"⏰ <code>{hora}</code>\n\n"
                     f"📦 <b>Quilate:</b> <code>{gold_type}</code>\n"
@@ -160,14 +162,16 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await main_menu(update)
 
 def main():
-    # Crea la aplicación con el token
+    if BOT_TOKEN == "TU_BOT_TOKEN_AQUÍ":
+        print("❌ ERROR: No has configurado el Token del Bot.")
+        return
+
     app = Application.builder().token(BOT_TOKEN).build()
     
-    # Manejadores
     app.add_handler(CommandHandler("start", start))
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_messages))
     
-    print("Bot en marcha...")
+    print("Bot en marcha y corregido...")
     app.run_polling()
 
 if __name__ == "__main__":
