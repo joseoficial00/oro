@@ -2,6 +2,8 @@ import logging
 import requests
 import os
 from datetime import datetime
+# Importamos zoneinfo para manejar las zonas horarias correctamente
+from zoneinfo import ZoneInfo 
 from telegram import Update, ReplyKeyboardMarkup
 from telegram.ext import (
     Application,
@@ -14,7 +16,6 @@ from telegram.ext import (
 # ==========================================
 # CONFIGURACIÓN
 # ==========================================
-# Se recomienda usar variables de entorno por seguridad
 BOT_TOKEN = os.getenv("BOT_TOKEN", "TU_BOT_TOKEN_AQUÍ")
 GOLD_API_KEY = os.getenv("GOLD_API_KEY", "TU_API_KEY_AQUÍ")
 
@@ -26,11 +27,13 @@ GOLD_TYPES = {
 
 CUSTOM_EMOJI = "5917773753390994274"
 
+# Definimos la zona horaria de Louisville, Kentucky
+TZ_LOUISVILLE = ZoneInfo("America/Kentucky/Louisville")
+
 def get_gold_price_ounce():
     url = "https://www.goldapi.io/api/XAU/USD"
     headers = {"x-access-token": GOLD_API_KEY, "Content-Type": "application/json"}
     try:
-        # Añadido verify=True para asegurar conexiones seguras
         response = requests.get(url, headers=headers, timeout=10)
         if response.status_code == 200:
             return float(response.json()["price"])
@@ -84,12 +87,12 @@ async def handle_messages(update: Update, context: ContextTypes.DEFAULT_TYPE):
     text = update.message.text
     user_data = context.user_data
     
-    # --- CORRECCIÓN DE FECHA ---
-    # %d/%m/%Y genera "04/06/2026" sin errores de codificación
-    dt_now = datetime.now()
+    # --- CORRECCIÓN DE FECHA Y ZONA HORARIA ---
+    # datetime.now(TZ_LOUISVILLE) fuerza al bot a usar la hora de Kentucky
+    dt_now = datetime.now(TZ_LOUISVILLE)
     fecha = dt_now.strftime("%d/%m/%Y") 
     hora = dt_now.strftime("%I:%M:%S %p")
-    # ---------------------------
+    # ------------------------------------------
 
     if text == "📈 TASA EN TIEMPO REAL 💸":
         price = get_gold_price_ounce()
@@ -129,7 +132,6 @@ async def handle_messages(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     elif user_data.get("step") == "input_grams":
         try:
-            # Limpieza de entrada para aceptar puntos o comas
             grams = float(text.replace(',', '.'))
             gold_type = user_data["gold_type"]
             price = get_gold_price_ounce()
@@ -139,7 +141,7 @@ async def handle_messages(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 gram_price_selected = gram_price_24k * GOLD_TYPES[gold_type]
                 
                 total_real = grams * gram_price_selected
-                total_compra = total_real * 0.90 # 10% de comisión
+                total_compra = total_real * 0.90
                 
                 res = (
                     f"✨ <b>COTIZACIÓN</b>\n"
@@ -171,7 +173,7 @@ def main():
     app.add_handler(CommandHandler("start", start))
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_messages))
     
-    print("Bot en marcha y corregido...")
+    print("Bot en marcha con zona horaria de Louisville...")
     app.run_polling()
 
 if __name__ == "__main__":
