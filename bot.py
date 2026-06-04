@@ -24,7 +24,7 @@ GOLD_TYPES = {
     "10K": 10 / 24, "14K": 14 / 24, "18K": 18 / 24, "22K": 22 / 24, "24K": 1.0,
 }
 
-CUSTOM_EMOJI = "5917773753390994274"
+GRAFICA_EMOJI = "5917773753390994274"
 
 def get_gold_price_ounce():
     url = "https://www.goldapi.io/api/XAU/USD"
@@ -139,7 +139,7 @@ async def handle_messages(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 total_compra = total_real * 0.90 # 10% de comisión
                 
                 res = (
-                    f"<tg-emoji emoji-id='{CUSTOM_EMOJI}'>✨</tg-emoji> <b>COTIZACIÓN</b>\n"
+                    f"<tg-emoji emoji-id='{GRAFICA_EMOJI}'>✨</tg-emoji> <b>COTIZACIÓN</b>\n"
                     f"📅 <code>{fecha}</code>\n"
                     f"⏰ <code>{hora}</code>\n\n"
                     f"📦 <b>Quilate:</b> <code>{gold_type}</code>\n"
