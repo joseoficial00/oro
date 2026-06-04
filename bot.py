@@ -43,8 +43,8 @@ def get_gold_price_ounce():
 
 async def main_menu(update: Update):
     keyboard = [
-        ["🥇 CALCULAR VALOR 🥇"],
-        ["📈 TASA EN TIEMPO REAL 💸"]
+        ["🥇 CALCULAR ESTIMADO 🥇"],
+        ["📈 PRECIO EN TIEMPO REAL 💸"]
     ]
     reply_markup = ReplyKeyboardMarkup(keyboard, resize_keyboard=True)
     
@@ -61,7 +61,7 @@ async def purity_menu(update: Update):
     keyboard = [
         ["⚡ 10K", "⚡ 14K"],
         ["🌟 18K", "🌟 22K"],
-        ["🏆 24K (Puro)"],
+        ["🏆 24K"],
         ["⬅️ VOLVER AL MENÚ"]
     ]
     reply_markup = ReplyKeyboardMarkup(keyboard, resize_keyboard=True)
