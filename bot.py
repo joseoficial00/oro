@@ -14,17 +14,17 @@ from telegram.ext import (
 # ==========================================
 # CONFIGURACIÓN
 # ==========================================
-BOT_TOKEN = os.getenv("BOT_TOKEN", "8723973833:AAFmyX4SK3DTE15fFUKu5AiofRS3QaQ2AA4")
-GOLD_API_KEY = os.getenv("GOLD_API_KEY", "goldapi-4ggdsmjfphsjl-io")
-STICKER_ID = "CAACAgEAAxkBAAEqFPRqIOIiK9ug6mVE5PNWYHtzZV_F8wACZAUAAncUCEUDIq9n7l5KjjsE"
-GRAFICA_EMOJI = "5917773753390994274"
+# Se recomienda usar variables de entorno por seguridad
+BOT_TOKEN = os.getenv("BOT_TOKEN", "TU_BOT_TOKEN_AQUÍ")
+GOLD_API_KEY = os.getenv("GOLD_API_KEY", "TU_API_KEY_AQUÍ")
 
 logging.basicConfig(level=logging.INFO)
 
-# Factores de pureza
 GOLD_TYPES = {
     "10K": 10 / 24, "14K": 14 / 24, "18K": 18 / 24, "22K": 22 / 24, "24K": 1.0,
 }
+
+CUSTOM_EMOJI = "5917773753390994274"
 
 def get_gold_price_ounce():
     url = "https://www.goldapi.io/api/XAU/USD"
@@ -33,7 +33,9 @@ def get_gold_price_ounce():
         response = requests.get(url, headers=headers, timeout=10)
         if response.status_code == 200:
             return float(response.json()["price"])
-        return None
+        else:
+            logging.error(f"Error API Oro: {response.status_code} - {response.text}")
+            return None
     except Exception as e:
         logging.error(f"Error de conexión: {e}")
         return None
@@ -45,15 +47,12 @@ def get_gold_price_ounce():
 async def main_menu(update: Update):
     keyboard = [
         ["🥇 CALCULAR VALOR 🥇"],
-        ["💰 PRECIOS POR GRAMO 💰"],
         ["📈 TASA EN TIEMPO REAL 💸"]
     ]
     reply_markup = ReplyKeyboardMarkup(keyboard, resize_keyboard=True)
     
-    await update.effective_chat.send_sticker(sticker=STICKER_ID)
-    
     text = (
-        "<b>JCS GOLD CALCULATOR | PREMIUM</b>\n\n"
+        "<b>💎 JCS GOLD CALCULATOR | PREMIUM 💎</b>\n\n"
         "✨ <b>Bienvenido al cotizador exclusivo.</b>\n"
         "» Conectado con los mercados globales.\n"
         "» Precisión matemática garantizada.\n\n"
@@ -84,33 +83,12 @@ async def handle_messages(update: Update, context: ContextTypes.DEFAULT_TYPE):
     text = update.message.text
     user_data = context.user_data
     
+    # Arreglo de fecha y hora
     dt_now = datetime.now()
     fecha = dt_now.strftime("%d/%m/%2026")
     hora = dt_now.strftime("%I:%M:%S %p")
 
-    # NUEVA FUNCIONALIDAD: PRECIOS POR GRAMO
-    if text == "💰 PRECIOS POR GRAMO 💰":
-        price = get_gold_price_ounce()
-        if price:
-            gram_24k = price / 31.1035
-            
-            msg = (
-                f"🏷 <b>NUESTROS PRECIOS DE COMPRA</b>\n"
-                f"<i>(Precio neto por 1 gramo con -10%)</i>\n"
-                f"⏱ <code>{hora}</code>\n\n"
-            )
-            
-            for quilate, factor in GOLD_TYPES.items():
-                # Precio real * factor de pureza * 0.90 (tu ganancia)
-                precio_compra = (gram_24k * factor) * 0.90
-                msg += f"🔸 <b>{quilate}:</b> <code>${precio_compra:,.2f} USD</code>\n"
-            
-            msg += f"\n⚠️ <i>Precios sujetos a cambios según el mercado.</i>"
-            await update.message.reply_text(msg, parse_mode="HTML")
-        else:
-            await update.message.reply_text("❌ Error al sincronizar con el mercado.")
-
-    elif text == "📈 TASA EN TIEMPO REAL 💸":
+    if text == "📈 TASA EN TIEMPO REAL 💸":
         price = get_gold_price_ounce()
         if price:
             msg = (
@@ -119,7 +97,7 @@ async def handle_messages(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 f"» <b>Valores de Mercado (XAU/USD):</b>\n"
                 f"🪙 <code>1 oz (Troy) </code> ➜ <code> ${price:,.2f} USD </code>\n"
                 f"🥇 <code>1g Oro (24K)</code> ➜ <code> ${(price / 31.1035):,.2f} USD </code>\n\n"
-                f"⚠️ <i>Esta es la tasa de bolsa, no el precio de compra.</i>"
+                f"⚠️ <i>La tasa fluctúa según la bolsa internacional.</i>"
             )
             await update.message.reply_text(msg, parse_mode="HTML")
         else:
@@ -138,9 +116,9 @@ async def handle_messages(update: Update, context: ContextTypes.DEFAULT_TYPE):
         user_data["gold_type"] = gold_type
         user_data["step"] = "input_grams"
         
-        await update.message.reply_text(
-            f"👑 <b>QUILATAJE: {gold_type}</b>\n\n"
-            f"✍️ <b>Envíe la cantidad de gramos a vender.</b>",
+        await update.message.reply_text(f"👑 <b>QUILATAJE: {gold_type}</b>\n\n"
+            f"✍️ <b>Envíe la cantidad de gramos en formato numérico.</b>\n\n"
+            f"💡 <i>Ejemplos: 10 o 5.75</i>",
             parse_mode="HTML",
             reply_markup=ReplyKeyboardMarkup([["⬅️ VOLVER"]], resize_keyboard=True)
         )
@@ -152,36 +130,43 @@ async def handle_messages(update: Update, context: ContextTypes.DEFAULT_TYPE):
             price = get_gold_price_ounce()
             
             if price:
-                gram_price_selected = (price / 31.1035) * GOLD_TYPES[gold_type]
+                # 31.1035 es la conversión de Onza Troy a Gramos
+                gram_price_24k = price / 31.1035
+                gram_price_selected = gram_price_24k * GOLD_TYPES[gold_type]
+                
                 total_real = grams * gram_price_selected
                 total_compra = total_real * 0.90 # 10% de comisión
                 
                 res = (
-                    f"<tg-emoji emoji-id='{GRAFICA_EMOJI}'>✨</tg-emoji> <b>COTIZACIÓN</b>\n"
-                    f"📅 <code>{fecha}</code>\n\n"
+                    f"<tg-emoji emoji-id='{CUSTOM_EMOJI}'>✨</tg-emoji> <b>COTIZACIÓN</b>\n"
+                    f"📅 <code>{fecha}</code>\n"
+                    f"⏰ <code>{hora}</code>\n\n"
                     f"📦 <b>Quilate:</b> <code>{gold_type}</code>\n"
                     f"⚖️ <b>Peso:</b> <code>{grams:,} g</code>\n\n"
                     f"💰 <b>VALOR REAL:</b> <code>${total_real:,.2f} USD</code>\n"
-                    f"🤝 <b>PRECIO COMPRA:</b> <code>${total_compra:,.2f} USD</code>\n\n"
+                    f"🤝 <b>PRECIO COMPRA (Neto):</b> <code>${total_compra:,.2f} USD</code>\n\n"
                     f"✍️ <i>Envíe otro peso o presione Volver.</i>"
                 )
                 await update.message.reply_text(res, parse_mode="HTML")
             else:
                 await update.message.reply_text("❌ Error al obtener precio del mercado.")
         except ValueError:
-            await update.message.reply_text("⚠️ Por favor, envíe un número válido.")
+            await update.message.reply_text("⚠️ Por favor, envíe un número válido (ej: 12.5).")
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     context.user_data.clear()
     await main_menu(update)
 
 def main():
+    # Crea la aplicación con el token
     app = Application.builder().token(BOT_TOKEN).build()
+    
+    # Manejadores
     app.add_handler(CommandHandler("start", start))
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_messages))
     
     print("Bot en marcha...")
-    app.run_polling(drop_pending_updates=True)
+    app.run_polling()
 
-if __name__ == "__main__":
+if name == "__main__":
     main()
