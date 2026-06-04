@@ -23,7 +23,8 @@ GOLD_TYPES = {
     "10K": 10 / 24, "14K": 14 / 24, "18K": 18 / 24, "22K": 22 / 24, "24K": 1.0,
 }
 
-CUSTOM_EMOJI = "5917773753390994274"
+LOGO_EMOJI = "AgADZAUAAncUCEU"
+GRAFICA_EMOJI = "5917773753390994274"
 
 def get_gold_price_ounce():
     url = "https://www.goldapi.io/api/XAU/USD"
@@ -48,7 +49,7 @@ async def main_menu(update: Update):
     reply_markup = ReplyKeyboardMarkup(keyboard, resize_keyboard=True)
     
     text = (
-        "💎 *JCS GOLD CALCULATOR | PREMIUM* 💎\n\n"
+        "<tg-emoji emoji-id='{EMOJI_TITULO}'>💎</tg-emoji> <b> *JCS GOLD CALCULATOR</b> <tg-emoji emoji-id='{EMOJI_TITULO}'>💎</tg-emoji>\n\n"
         "✨ *Bienvenido al cotizador exclusivo.*\n"
         "» Conectado con los mercados globales.\n"
         "» Precisión matemática garantizada.\n\n"
