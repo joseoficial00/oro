@@ -49,7 +49,7 @@ async def main_menu(update: Update):
     reply_markup = ReplyKeyboardMarkup(keyboard, resize_keyboard=True)
     
     text = (
-        "<tg-emoji emoji-id='{EMOJI_TITULO}'>💎</tg-emoji> <b> *JCS GOLD CALCULATOR</b> <tg-emoji emoji-id='{EMOJI_TITULO}'>💎</tg-emoji>\n\n"
+        f"<tg-emoji emoji-id='{EMOJI_TITULO}'>💎</tg-emoji> <b>JCS GOLD CALCULATOR</b> <tg-emoji emoji-id='{EMOJI_TITULO}'>💎</tg-emoji>\n\n"
         "✨ *Bienvenido al cotizador exclusivo.*\n"
         "» Conectado con los mercados globales.\n"
         "» Precisión matemática garantizada.\n\n"
