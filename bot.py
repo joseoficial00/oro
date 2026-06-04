@@ -93,7 +93,7 @@ async def handle_messages(update: Update, context: ContextTypes.DEFAULT_TYPE):
         if price:
             msg = (
                 f"📊 <b>TASA OFICIAL EN TIEMPO REAL</b>\n"
-                f"⏱ <code>{fecha} • {hora}</code>\n\n"
+                f"⏱ <code>{fecha} {hora}</code>\n\n"
                 f"» <b>Valores de Mercado (XAU/USD):</b>\n"
                 f"🪙 <code>1 oz (Troy) </code> ➜ <code> ${price:,.2f} USD </code>\n"
                 f"🥇 <code>1g Oro (24K)</code> ➜ <code> ${(price / 31.1035):,.2f} USD </code>\n\n"
@@ -116,7 +116,9 @@ async def handle_messages(update: Update, context: ContextTypes.DEFAULT_TYPE):
         user_data["gold_type"] = gold_type
         user_data["step"] = "input_grams"
         
-        await update.message.reply_text(f"👑 <b>QUILATAJE: {gold_type}</b>\n\n"
+        await update.message.reply_text(
+            
+            f"👑 <b>QUILATAJE: {gold_type}</b>\n\n"
             f"✍️ <b>Envíe la cantidad de gramos en formato numérico.</b>\n\n"
             f"💡 <i>Ejemplos: 10 o 5.75</i>",
             parse_mode="HTML",
