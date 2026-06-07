@@ -53,34 +53,29 @@ async def deny(update: Update):
 
 
 # =========================
-# 💰 API ORO (FIX)
+# 💰 API ORO (CORREGIDO)
 # =========================
 def get_gold_price_ounce():
     url = "https://www.goldapi.io/api/XAU/USD"
-    headers = {
-        "x-access-token": GOLD_API_KEY,
-        "Content-Type": "application/json"
-    }
+    headers = {"x-access-token": GOLD_API_KEY}
 
     try:
         r = requests.get(url, headers=headers, timeout=10)
-
-        logging.info(f"GoldAPI status: {r.status_code}")
-        logging.info(f"GoldAPI response: {r.text}")
 
         if r.status_code == 200:
             data = r.json()
             return float(data.get("price", 0))
 
+        logging.error(f"Gold API error status: {r.status_code}")
         return None
 
     except Exception as e:
-        logging.error(f"Gold API error: {e}")
+        logging.error(f"Gold API exception: {e}")
         return None
 
 
 # =========================
-# 📋 MENÚ
+# 📋 MENÚ 2x2 (ORIGINAL)
 # =========================
 async def main_menu(update: Update):
 
@@ -94,15 +89,17 @@ async def main_menu(update: Update):
 
     await update.message.reply_text(
         "<b>💎 JCS GOLD CALCULATOR | PREMIUM 💎</b>\n\n"
-        "✨ Bienvenido al cotizador.\n"
-        "👇 Selecciona una opción 👇",
+        "✨ <b>Bienvenido al cotizador exclusivo.</b>\n"
+        "» Conectado con los mercados globales.\n"
+        "» Precisión matemática garantizada.\n\n"
+        "👇 <i>Por favor, seleccione una acción del menú:</i> 👇",
         parse_mode="HTML",
         reply_markup=ReplyKeyboardMarkup(keyboard, resize_keyboard=True)
     )
 
 
 # =========================
-# 🏆 PUREZA
+# 🏆 PUREZA (ORIGINAL)
 # =========================
 async def purity_menu(update: Update):
 
@@ -113,14 +110,15 @@ async def purity_menu(update: Update):
     ]
 
     await update.message.reply_text(
-        "<b>🏆 SELECCIÓN DE PUREZA</b>",
+        "<b>🏆 SELECCIÓN DE PUREZA</b>\n\n"
+        "Seleccione el quilataje del oro a evaluar:",
         parse_mode="HTML",
         reply_markup=ReplyKeyboardMarkup(keyboard, resize_keyboard=True)
     )
 
 
 # =========================
-# 👑 ADMIN
+# 👑 ADMIN PANEL
 # =========================
 async def admin_panel(update: Update):
 
@@ -167,26 +165,32 @@ async def handle_messages(update: Update, context: ContextTypes.DEFAULT_TYPE):
     fecha = dt.strftime("%d/%m/%Y")
     hora = dt.strftime("%I:%M:%S %p")
 
-    # ================= MENÚ =================
+    # ================= MENÚ ADMIN =================
+    if text == "👑 PANEL ADMIN":
+        admin_panel(update)
+        data.clear()
+        return
+
     if text == "⬅️ VOLVER AL MENÚ":
         data.clear()
-        await main_menu(update)
+        main_menu(update)
         return
 
+    # ================= COTIZAR =================
     if text == "🥇 COTIZAR 🥇":
         data["step"] = "select"
-        await purity_menu(update)
+        purity_menu(update)
         return
 
-    # ================= TASA EN TIEMPO REAL =================
+    # ================= TASA EN TIEMPO REAL (CORREGIDO) =================
     if text == "📈 TASA EN TIEMPO REAL 💸":
 
         price = get_gold_price_ounce()
 
-        if price is not None:
+        if price is not None and price > 0:
             gram = price / 31.1035
 
-            await update.message.reply_text(
+            update.message.reply_text(
                 f"📊 <b>TASA EN TIEMPO REAL</b>\n"
                 f"⏱ {fecha} {hora}\n\n"
                 f"🪙 1 oz → ${price:,.2f}\n"
@@ -194,34 +198,32 @@ async def handle_messages(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 parse_mode="HTML"
             )
         else:
-            await update.message.reply_text(
-                "⚠️ No se pudo obtener la tasa del oro."
-            )
+            update.message.reply_text("⚠️ No se pudo obtener la tasa del oro.")
         return
 
-    # ================= PRECIO COMPRA =================
+    # ================= PRECIO COMPRA (CORREGIDO) =================
     if text == "💵 PRECIO DE COMPRA 💵":
 
         price = get_gold_price_ounce()
 
-        if price is None:
-            await update.message.reply_text("⚠️ Error obteniendo precio del oro.")
+        if price is None or price == 0:
+            update.message.reply_text("⚠️ No se pudo obtener el precio del oro.")
             return
 
         gram = price / 31.1035
         margin = USER_MARGINS.get(user_id, 0.88)
 
         msg = (
-            f"💵 <b>PRECIO DE COMPRA</b>\n"
-            f"📅 {fecha}\n"
-            f"⏰ {hora}\n\n"
-            f"🥇 10K: ${gram*GOLD_TYPES['10K']*margin:.2f}\n"
-            f"🥇 14K: ${gram*GOLD_TYPES['14K']*margin:.2f}\n"
-            f"🥇 18K: ${gram*GOLD_TYPES['18K']*margin:.2f}\n"
-            f"🥇 24K: ${gram*GOLD_TYPES['24K']*margin:.2f}"
+            f"💵 <b>PRECIO DE COMPRA POR GRAMO</b>\n"
+            f"📅 <code>{fecha}</code>\n"
+            f"⏰ <code>{hora}</code>\n\n"
+            f"🥇 10K: <code>${gram*GOLD_TYPES['10K']*margin:.2f}</code>\n"
+            f"🥇 14K: <code>${gram*GOLD_TYPES['14K']*margin:.2f}</code>\n"
+            f"🥇 18K: <code>${gram*GOLD_TYPES['18K']*margin:.2f}</code>\n"
+            f"🥇 24K: <code>${gram*GOLD_TYPES['24K']*margin:.2f}</code>"
         )
 
-        await update.message.reply_text(msg, parse_mode="HTML")
+        update.message.reply_text(msg, parse_mode="HTML")
         return
 
     # ================= PUREZA =================
@@ -230,8 +232,9 @@ async def handle_messages(update: Update, context: ContextTypes.DEFAULT_TYPE):
         data["gold_type"] = gold_type
         data["step"] = "grams"
 
-        await update.message.reply_text(
-            f"✍️ Envía gramos para {gold_type}",
+        update.message.reply_text(
+            f"👑 <b>QUILATAJE: {gold_type}</b>\n\n"
+            "✍️ Envíe la cantidad de gramos.",
             parse_mode="HTML"
         )
         return
@@ -242,26 +245,28 @@ async def handle_messages(update: Update, context: ContextTypes.DEFAULT_TYPE):
             gold_type = data["gold_type"]
 
             price = get_gold_price_ounce()
-            if price is None:
-                await update.message.reply_text("⚠️ Error de API.")
+
+            if price is None or price == 0:
+                update.message.reply_text("⚠️ Error obteniendo precio del oro.")
                 return
 
             gram = price / 31.1035
             total = grams * gram * GOLD_TYPES[gold_type]
             buy = total * USER_MARGINS.get(user_id, 0.88)
 
-            await update.message.reply_text(
+            update.message.reply_text(
                 f"✨ <b>COTIZACIÓN</b>\n\n"
+                f"📅 {fecha}\n"
+                f"⏰ {hora}\n\n"
                 f"📦 {gold_type}\n"
                 f"⚖️ {grams} g\n\n"
-                f"💰 Valor: ${total:,.2f}\n"
-                f"🤝 Compra: ${buy:,.2f}",
+                f"💰 VALOR: ${total:,.2f}\n"
+                f"🤝 COMPRA: ${buy:,.2f}",
                 parse_mode="HTML"
             )
 
         except:
-            await update.message.reply_text("⚠️ Número inválido")
-        return
+            update.message.reply_text("⚠️ Número inválido")
 
 
 # =========================
