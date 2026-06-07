@@ -1,4 +1,3 @@
-```python
 import logging
 import requests
 import os
