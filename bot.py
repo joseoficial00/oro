@@ -15,6 +15,12 @@ from telegram.ext import (
 BOT_TOKEN = os.getenv("BOT_TOKEN", "TU_BOT_TOKEN_AQUÍ")
 GOLD_API_KEY = os.getenv("GOLD_API_KEY", "TU_API_KEY_AQUÍ")
 
+# IDs autorizados
+AUTHORIZED_USERS = {
+    6794562791,  # Tu ID
+    987654321,  # Otro usuario autorizado
+}
+
 logging.basicConfig(level=logging.INFO)
 
 GOLD_TYPES = {
@@ -26,16 +32,36 @@ GOLD_TYPES = {
 
 TZ_LOUISVILLE = ZoneInfo("America/Kentucky/Louisville")
 
+
+def is_authorized(update: Update):
+    return update.effective_user.id in AUTHORIZED_USERS
+
+
+async def access_denied(update: Update):
+    await update.effective_chat.send_message(
+        "⛔ ACCESO DENEGADO\n\n"
+        "No tienes autorización para utilizar este bot."
+    )
+
+
 def get_gold_price_ounce():
     url = "https://www.goldapi.io/api/XAU/USD"
-    headers = {"x-access-token": GOLD_API_KEY, "Content-Type": "application/json"}
+    headers = {
+        "x-access-token": GOLD_API_KEY,
+        "Content-Type": "application/json"
+    }
+
     try:
         response = requests.get(url, headers=headers, timeout=10)
+
         if response.status_code == 200:
             return float(response.json()["price"])
+
         return None
+
     except Exception:
         return None
+
 
 async def main_menu(update: Update):
     keyboard = [
@@ -43,20 +69,26 @@ async def main_menu(update: Update):
         ["📈 TASA EN TIEMPO REAL 💸"],
         ["💵 PRECIO DE COMPRA 💵"]
     ]
-    reply_markup = ReplyKeyboardMarkup(keyboard, resize_keyboard=True)
+
+    reply_markup = ReplyKeyboardMarkup(
+        keyboard,
+        resize_keyboard=True
+    )
 
     text = (
         "<b>💎 JCS GOLD CALCULATOR | PREMIUM 💎</b>\n\n"
         "✨ <b>Bienvenido al cotizador exclusivo.</b>\n"
         "» Conectado con los mercados globales.\n"
         "» Precisión matemática garantizada.\n\n"
-        "👇 <i>Por favor, seleccione una acción del menú:</i> 👇"
+        "👇 <i>Seleccione una opción:</i>"
     )
+
     await update.effective_chat.send_message(
         text,
-        reply_markup=reply_markup,
-        parse_mode="HTML"
+        parse_mode="HTML",
+        reply_markup=reply_markup
     )
+
 
 async def purity_menu(update: Update):
     keyboard = [
@@ -65,19 +97,35 @@ async def purity_menu(update: Update):
         ["🏆 24K (Puro)"],
         ["⬅️ VOLVER AL MENÚ"]
     ]
-    reply_markup = ReplyKeyboardMarkup(keyboard, resize_keyboard=True)
 
-    text = (
-        "<b>🏆 SELECCIÓN DE PUREZA</b>\n\n"
-        "Seleccione el quilataje del oro a evaluar:"
+    reply_markup = ReplyKeyboardMarkup(
+        keyboard,
+        resize_keyboard=True
     )
+
     await update.message.reply_text(
-        text,
-        reply_markup=reply_markup,
-        parse_mode="HTML"
+        "<b>🏆 SELECCIÓN DE PUREZA</b>\n\nSeleccione el quilataje:",
+        parse_mode="HTML",
+        reply_markup=reply_markup
     )
+
+
+async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
+
+    if not is_authorized(update):
+        await access_denied(update)
+        return
+
+    context.user_data.clear()
+    await main_menu(update)
+
 
 async def handle_messages(update: Update, context: ContextTypes.DEFAULT_TYPE):
+
+    if not is_authorized(update):
+        await access_denied(update)
+        return
+
     text = update.message.text
     user_data = context.user_data
 
@@ -86,9 +134,11 @@ async def handle_messages(update: Update, context: ContextTypes.DEFAULT_TYPE):
     hora = dt_now.strftime("%I:%M:%S %p")
 
     if text == "💵 PRECIO DE COMPRA 💵":
+
         price = get_gold_price_ounce()
 
         if price:
+
             gram_price_24k = price / 31.1035
 
             msg = (
@@ -100,83 +150,152 @@ async def handle_messages(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 f"🥇 <b>18K:</b> <code>${gram_price_24k * GOLD_TYPES['18K'] * 0.88:.2f}/g</code>\n"
                 f"🥇 <b>24K:</b> <code>${gram_price_24k * GOLD_TYPES['24K'] * 0.88:.2f}/g</code>"
             )
-            await update.message.reply_text(msg, parse_mode="HTML")
+
+            await update.message.reply_text(
+                msg,
+                parse_mode="HTML"
+            )
+
         else:
-            await update.message.reply_text("❌ No se pudo obtener el precio actual.")
+            await update.message.reply_text(
+                "❌ No se pudo obtener el precio actual."
+            )
+
         return
 
     if text == "📈 TASA EN TIEMPO REAL 💸":
+
         price = get_gold_price_ounce()
+
         if price:
+
             msg = (
                 f"📊 <b>TASA OFICIAL EN TIEMPO REAL</b>\n"
-                f"⏱ <code>{fecha} {hora}</code>\n\n"
-                f"🪙 <code>1 oz (Troy)</code> ➜ <code>${price:,.2f} USD</code>\n"
-                f"🥇 <code>1g Oro (24K)</code> ➜ <code>${(price / 31.1035):,.2f} USD</code>"
+                f"📅 <code>{fecha}</code>\n"
+                f"⏰ <code>{hora}</code>\n\n"
+                f"🪙 <code>1 oz Troy</code> ➜ "
+                f"<code>${price:,.2f} USD</code>\n"
+                f"🥇 <code>1g Oro 24K</code> ➜ "
+                f"<code>${(price / 31.1035):,.2f} USD</code>"
             )
-            await update.message.reply_text(msg, parse_mode="HTML")
-        else:
-            await update.message.reply_text("❌ No se pudo sincronizar la tasa actual.")
 
-    elif text == "🥇 CALCULAR VALOR 🥇":
+            await update.message.reply_text(
+                msg,
+                parse_mode="HTML"
+            )
+
+        else:
+            await update.message.reply_text(
+                "❌ No se pudo sincronizar la tasa actual."
+            )
+
+        return
+
+    if text == "🥇 CALCULAR VALOR 🥇":
+
         user_data["step"] = "select_purity"
         await purity_menu(update)
+        return
 
-    elif text in ["⬅️ VOLVER AL MENÚ", "⬅️ VOLVER"]:
+    if text in ["⬅️ VOLVER AL MENÚ", "⬅️ VOLVER"]:
+
         user_data.clear()
         await main_menu(update)
+        return
 
-    elif user_data.get("step") == "select_purity" and any(q in text for q in GOLD_TYPES):
-        gold_type = next(q for q in GOLD_TYPES if q in text)
+    if (
+        user_data.get("step") == "select_purity"
+        and any(q in text for q in GOLD_TYPES)
+    ):
+
+        gold_type = next(
+            q for q in GOLD_TYPES if q in text
+        )
+
         user_data["gold_type"] = gold_type
         user_data["step"] = "input_grams"
 
         await update.message.reply_text(
             f"👑 <b>QUILATAJE: {gold_type}</b>\n\n"
-            f"✍️ <b>Envíe la cantidad de gramos en formato numérico.</b>\n\n"
-            f"💡 <i>Ejemplos: 10 o 5.75</i>",
+            f"✍️ Envíe los gramos.\n\n"
+            f"💡 Ejemplo: 10 o 5.75",
             parse_mode="HTML",
-            reply_markup=ReplyKeyboardMarkup([["⬅️ VOLVER"]], resize_keyboard=True)
+            reply_markup=ReplyKeyboardMarkup(
+                [["⬅️ VOLVER"]],
+                resize_keyboard=True
+            )
         )
 
-    elif user_data.get("step") == "input_grams":
+        return
+
+    if user_data.get("step") == "input_grams":
+
         try:
-            grams = float(text.replace(',', '.'))
+
+            grams = float(text.replace(",", "."))
             gold_type = user_data["gold_type"]
+
             price = get_gold_price_ounce()
 
-            if price:
-                gram_price_24k = price / 31.1035
-                gram_price_selected = gram_price_24k * GOLD_TYPES[gold_type]
-
-                total_real = grams * gram_price_selected
-                total_compra = total_real * 0.88
-
-                res = (
-                    f"✨ <b>COTIZACIÓN</b>\n"
-                    f"📅 <code>{fecha}</code>\n"
-                    f"⏰ <code>{hora}</code>\n\n"
-                    f"📦 <b>Quilate:</b> <code>{gold_type}</code>\n"
-                    f"⚖️ <b>Peso:</b> <code>{grams} g</code>\n\n"
-                    f"💰 <b>VALOR REAL:</b> <code>${total_real:,.2f} USD</code>\n"
-                    f"🤝 <b>PRECIO COMPRA:</b> <code>${total_compra:,.2f} USD</code>\n\n"
-                    f"✍️ <i>Envíe otro peso o presione Volver.</i>"
+            if not price:
+                await update.message.reply_text(
+                    "❌ Error al obtener precio del mercado."
                 )
-                await update.message.reply_text(res, parse_mode="HTML")
-            else:
-                await update.message.reply_text("❌ Error al obtener precio del mercado.")
-        except ValueError:
-            await update.message.reply_text("⚠️ Por favor, envíe un número válido (ej: 12.5).")
+                return
 
-async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    context.user_data.clear()
-    await main_menu(update)
+            gram_price_24k = price / 31.1035
+            gram_price_selected = (
+                gram_price_24k *
+                GOLD_TYPES[gold_type]
+            )
+
+            total_real = grams * gram_price_selected
+            total_compra = total_real * 0.88
+
+            msg = (
+                f"✨ <b>COTIZACIÓN</b>\n\n"
+                f"📅 <code>{fecha}</code>\n"
+                f"⏰ <code>{hora}</code>\n\n"
+                f"📦 <b>Quilate:</b> <code>{gold_type}</code>\n"
+                f"⚖️ <b>Peso:</b> <code>{grams} g</code>\n\n"
+                f"💰 <b>VALOR REAL:</b>\n"
+                f"<code>${total_real:,.2f} USD</code>\n\n"
+                f"🤝 <b>PRECIO COMPRA:</b>\n"
+                f"<code>${total_compra:,.2f} USD</code>"
+            )
+
+            await update.message.reply_text(
+                msg,
+                parse_mode="HTML"
+            )
+
+        except ValueError:
+
+            await update.message.reply_text(
+                "⚠️ Introduzca un número válido.\n"
+                "Ejemplo: 12.5"
+            )
+
 
 def main():
+
     app = Application.builder().token(BOT_TOKEN).build()
-    app.add_handler(CommandHandler("start", start))
-    app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_messages))
+
+    app.add_handler(
+        CommandHandler("start", start)
+    )
+
+    app.add_handler(
+        MessageHandler(
+            filters.TEXT & ~filters.COMMAND,
+            handle_messages
+        )
+    )
+
+    print("Bot iniciado correctamente...")
+
     app.run_polling()
+
 
 if __name__ == "__main__":
     main()
