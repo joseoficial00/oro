@@ -94,7 +94,7 @@ async def purity_menu(update: Update):
     keyboard = [
         ["⚡ 10K", "⚡ 14K"],
         ["🌟 18K", "🏆 24K (Puro)"],
-        ["⬅️ VOLVER AL MENÚ", " "]
+        ["⬅️ VOLVER AL MENÚ"]
     ]
 
     await update.message.reply_text(
