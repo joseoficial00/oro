@@ -181,7 +181,7 @@ async def handle_messages(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return
 
     # ================= VOLVER (ARREGLADO) =================
-    if text in ["⬅️ VOLVER AL MENÚ", "⬅️ VOLVER"]:
+    if text in ["⬅️ VOLVER AL MENÚ"]:
         user_data.clear()
         await main_menu(update)
         return
