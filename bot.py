@@ -194,22 +194,18 @@ async def handle_messages(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text("✍️ Envía ID del usuario")
         return
 
-
     if user_data.get("admin") == "add_id":
         user_data["temp_id"] = text
         user_data["admin"] = "add_name"
         await update.message.reply_text("✍️ Envía nombre del usuario")
         return
 
-
     if user_data.get("admin") == "add_name":
         try:
             uid = int(user_data["temp_id"])
-            name = text
-
-            AUTHORIZED_USERS.add(uid)
-            USER_NAMES[uid] = name
+            USER_NAMES[uid] = text
             USER_MARGINS[uid] = 0.88
+            AUTHORIZED_USERS.add(uid)
 
             user_data.clear()
             await update.message.reply_text("✅ Usuario agregado")
@@ -221,27 +217,36 @@ async def handle_messages(update: Update, context: ContextTypes.DEFAULT_TYPE):
     # ================= EDITAR USUARIO =================
     if text == "✏️ EDITAR USUARIO":
         user_data["admin"] = "edit_select"
-        kb = [[str(u)] for u in AUTHORIZED_USERS]
+
+        kb = []
+        for uid in AUTHORIZED_USERS:
+            if uid == ADMIN_ID:
+                continue
+            kb.append([f"{USER_NAMES.get(uid,'USER')} | {uid}"])
+
         await update.message.reply_text(
-            "Selecciona usuario:",
+            "👤 Selecciona usuario:",
             reply_markup=ReplyKeyboardMarkup(kb, resize_keyboard=True)
         )
         return
 
-
     if user_data.get("admin") == "edit_select":
-        user_data["edit_id"] = int(text)
-        user_data["admin"] = "edit_menu"
+        try:
+            uid = int(text.split("|")[1].strip())
+            user_data["edit_id"] = uid
+            user_data["admin"] = "edit_menu"
 
-        kb = [
-            ["✏️ EDITAR NOMBRE", "💰 EDITAR MARGEN"],
-            ["⬅️ VOLVER"]
-        ]
+            kb = [
+                ["✏️ EDITAR NOMBRE", "💰 EDITAR MARGEN"],
+                ["⬅️ VOLVER"]
+            ]
 
-        await update.message.reply_text(
-            "¿Qué deseas editar?",
-            reply_markup=ReplyKeyboardMarkup(kb, resize_keyboard=True)
-        )
+            await update.message.reply_text(
+                "¿Qué deseas editar?",
+                reply_markup=ReplyKeyboardMarkup(kb, resize_keyboard=True)
+            )
+        except:
+            await update.message.reply_text("❌ Error al seleccionar usuario")
         return
 
 
@@ -250,24 +255,19 @@ async def handle_messages(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text("Envía nuevo nombre")
         return
 
-
     if text == "💰 EDITAR MARGEN":
         user_data["admin"] = "edit_margin"
         await update.message.reply_text("Envía nuevo margen (ej: 0.90)")
         return
 
-
     if user_data.get("admin") == "edit_name":
-        uid = user_data["edit_id"]
-        USER_NAMES[uid] = text
+        USER_NAMES[user_data["edit_id"]] = text
         user_data.clear()
         await update.message.reply_text("✅ Nombre actualizado")
         return
 
-
     if user_data.get("admin") == "edit_margin":
-        uid = user_data["edit_id"]
-        USER_MARGINS[uid] = float(text)
+        USER_MARGINS[user_data["edit_id"]] = float(text)
         user_data.clear()
         await update.message.reply_text("💰 Margen actualizado")
         return
@@ -282,7 +282,11 @@ async def handle_messages(update: Update, context: ContextTypes.DEFAULT_TYPE):
     # ================= ELIMINAR USUARIO =================
     if text == "➖ QUITAR USUARIO":
         user_data["admin"] = "delete_select"
-        kb = [[str(u)] for u in AUTHORIZED_USERS if u != ADMIN_ID]
+
+        kb = []
+        for uid in AUTHORIZED_USERS:
+            if uid != ADMIN_ID:
+                kb.append([f"{USER_NAMES.get(uid,'USER')} | {uid}"])
 
         await update.message.reply_text(
             "Selecciona usuario a eliminar:",
@@ -292,7 +296,7 @@ async def handle_messages(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
     if user_data.get("admin") == "delete_select":
-        user_data["delete_id"] = int(text)
+        user_data["delete_id"] = int(text.split("|")[1].strip())
         user_data["admin"] = "delete_confirm"
 
         kb = [["SI", "NO"]]
@@ -307,26 +311,49 @@ async def handle_messages(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if user_data.get("admin") == "delete_confirm":
         if text == "SI":
             uid = user_data["delete_id"]
+
             AUTHORIZED_USERS.discard(uid)
             USER_NAMES.pop(uid, None)
             USER_MARGINS.pop(uid, None)
 
             user_data.clear()
+
             await update.message.reply_text("❌ Usuario eliminado")
+            await main_menu(update)
         else:
             user_data.clear()
             await admin_panel(update)
         return
 
 
-    # ================= MENÚ PRINCIPAL =================
+    # ================= MENÚ =================
     if text == "🥇 CALCULAR VALOR 🥇":
         user_data["step"] = "select"
         await purity_menu(update)
         return
 
 
-    # ================= RESTO (tus mensajes originales intactos) =================
+    # ================= PRECIO COMPRA =================
+    if text == "💵 PRECIO DE COMPRA 💵":
+        price = get_gold_price_ounce()
+        if price:
+            gram = price / 31.1035
+            margin = USER_MARGINS.get(user_id, 0.88)
+
+            await update.message.reply_text(
+                f"💵 <b>PRECIO DE COMPRA POR GRAMO</b>\n"
+                f"📅 <code>{fecha}</code>\n"
+                f"⏰ <code>{hora}</code>\n\n"
+                f"🥇 10K: <code>${gram*GOLD_TYPES['10K']*margin:.2f}</code>\n"
+                f"🥇 14K: <code>${gram*GOLD_TYPES['14K']*margin:.2f}</code>\n"
+                f"🥇 18K: <code>${gram*GOLD_TYPES['18K']*margin:.2f}</code>\n"
+                f"🥇 24K: <code>${gram*GOLD_TYPES['24K']*margin:.2f}</code>",
+                parse_mode="HTML"
+            )
+        return
+
+
+    # ================= TASA =================
     if text == "📈 TASA EN TIEMPO REAL 💸":
         price = get_gold_price_ounce()
         if price:
@@ -340,26 +367,7 @@ async def handle_messages(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return
 
 
-    if text == "💵 PRECIO DE COMPRA 💵":
-        price = get_gold_price_ounce()
-        if price:
-            gram = price / 31.1035
-            margin = USER_MARGINS.get(user_id, 0.88)
-
-            msg = (
-                f"💵 <b>PRECIO DE COMPRA POR GRAMO</b>\n"
-                f"📅 <code>{fecha}</code>\n"
-                f"⏰ <code>{hora}</code>\n\n"
-                f"🥇 10K: <code>${gram*GOLD_TYPES['10K']*margin:.2f}</code>\n"
-                f"🥇 14K: <code>${gram*GOLD_TYPES['14K']*margin:.2f}</code>\n"
-                f"🥇 18K: <code>${gram*GOLD_TYPES['18K']*margin:.2f}</code>\n"
-                f"🥇 24K: <code>${gram*GOLD_TYPES['24K']*margin:.2f}</code>"
-            )
-
-            await update.message.reply_text(msg, parse_mode="HTML")
-        return
-
-
+    # ================= COTIZAR =================
     if user_data.get("step") == "select" and any(k in text for k in GOLD_TYPES):
         gold_type = next(k for k in GOLD_TYPES if k in text)
         user_data["gold_type"] = gold_type
@@ -367,8 +375,7 @@ async def handle_messages(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
         await update.message.reply_text(
             f"👑 <b>QUILATAJE: {gold_type}</b>\n\n"
-            f"✍️ <b>Envíe la cantidad de gramos en formato numérico.</b>\n\n"
-            f"💡 <i>Ejemplos: 10 o 5.75</i>",
+            f"✍️ Envíe los gramos:",
             parse_mode="HTML"
         )
         return
@@ -392,8 +399,7 @@ async def handle_messages(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 f"📦 <b>Quilate:</b> <code>{gold_type}</code>\n"
                 f"⚖️ <b>Peso:</b> <code>{grams} g</code>\n\n"
                 f"💰 <b>VALOR REAL:</b> <code>${total:,.2f} USD</code>\n"
-                f"🤝 <b>PRECIO COMPRA (Neto):</b> <code>${buy:,.2f} USD</code>\n\n"
-                f"✍️ <i>Envíe otro peso o Volver</i>",
+                f"🤝 <b>PRECIO COMPRA (Neto):</b> <code>${buy:,.2f} USD</code>",
                 parse_mode="HTML"
             )
 
@@ -406,6 +412,7 @@ async def handle_messages(update: Update, context: ContextTypes.DEFAULT_TYPE):
 # =========================
 def main():
     app = Application.builder().token(BOT_TOKEN).build()
+
     app.add_handler(CommandHandler("start", start))
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_messages))
 
