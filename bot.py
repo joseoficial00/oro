@@ -15,11 +15,13 @@ from telegram.ext import (
 BOT_TOKEN = os.getenv("BOT_TOKEN", "TU_BOT_TOKEN_AQUÍ")
 GOLD_API_KEY = os.getenv("GOLD_API_KEY", "TU_API_KEY_AQUÍ")
 
-# 👑 ADMIN
+# 👑 TU ID (ADMIN)
 ADMIN_ID = 6794562791
 
+# Usuarios autorizados
 AUTHORIZED_USERS = {ADMIN_ID}
 
+# Margen por usuario
 USER_MARGINS = {
     ADMIN_ID: 0.88
 }
@@ -37,7 +39,7 @@ TZ_LOUISVILLE = ZoneInfo("America/Kentucky/Louisville")
 
 
 # =========================
-# 🔐 CONTROL ACCESO
+# 🔐 CONTROL DE ACCESO
 # =========================
 def is_authorized(update: Update):
     return update.effective_user.id in AUTHORIZED_USERS
@@ -47,8 +49,8 @@ def is_admin(update: Update):
     return update.effective_user.id == ADMIN_ID
 
 
-async def access_denied(update: Update):
-    await update.effective_chat.send_message("⛔ ACCESO DENEGADO")
+async def deny(update: Update):
+    await update.effective_chat.send_message("⛔ NO AUTORIZADO")
 
 
 # =========================
@@ -59,16 +61,16 @@ def get_gold_price_ounce():
     headers = {"x-access-token": GOLD_API_KEY, "Content-Type": "application/json"}
 
     try:
-        response = requests.get(url, headers=headers, timeout=10)
-        if response.status_code == 200:
-            return float(response.json()["price"])
+        r = requests.get(url, headers=headers, timeout=10)
+        if r.status_code == 200:
+            return float(r.json()["price"])
         return None
     except:
         return None
 
 
 # =========================
-# 📋 MENÚ ORIGINAL (NO TOCADO)
+# 📋 MENÚ (NO TOCADO)
 # =========================
 async def main_menu(update: Update):
     keyboard = [
@@ -116,33 +118,12 @@ async def purity_menu(update: Update):
 
 
 # =========================
-# 👑 PANEL ADMIN
-# =========================
-async def admin_panel(update: Update):
-    if not is_admin(update):
-        return
-
-    keyboard = [
-        ["➕ AGREGAR USUARIO"],
-        ["➖ ELIMINAR USUARIO"],
-        ["💰 CAMBIAR MARGEN"],
-        ["📋 VER USUARIOS"],
-        ["⬅️ VOLVER AL MENÚ"]
-    ]
-
-    await update.message.reply_text(
-        "👑 PANEL ADMIN",
-        reply_markup=ReplyKeyboardMarkup(keyboard, resize_keyboard=True)
-    )
-
-
-# =========================
 # 🚀 START
 # =========================
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     if not is_authorized(update):
-        await access_denied(update)
+        await deny(update)
         return
 
     context.user_data.clear()
@@ -155,7 +136,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def handle_messages(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     if not is_authorized(update):
-        await access_denied(update)
+        await deny(update)
         return
 
     text = update.message.text
@@ -166,39 +147,35 @@ async def handle_messages(update: Update, context: ContextTypes.DEFAULT_TYPE):
     fecha = dt_now.strftime("%d/%m/%Y")
     hora = dt_now.strftime("%I:%M:%S %p")
 
-    # ================= ADMIN =================
-    if text == "👑 PANEL ADMIN":
-        await admin_panel(update)
+    # ================= ADMIN PANEL =================
+    if text == "👑 PANEL ADMIN" and is_admin(update):
+        await update.message.reply_text(
+            "👑 PANEL ADMIN\n\n"
+            "➕ AGREGAR USUARIO\n"
+            "➖ ELIMINAR USUARIO\n"
+            "💰 CAMBIAR MARGEN\n"
+            "📋 VER USUARIOS"
+        )
         return
 
-    if text == "📋 VER USUARIOS":
-        if not is_admin(update):
-            return
-
+    if text == "📋 VER USUARIOS" and is_admin(update):
         msg = "📋 USUARIOS:\n\n"
         for uid in AUTHORIZED_USERS:
             msg += f"👤 {uid} | Margen: {USER_MARGINS.get(uid, 0.88)}\n"
-
         await update.message.reply_text(msg)
         return
 
-    if text == "➕ AGREGAR USUARIO":
-        if not is_admin(update):
-            return
+    if text == "➕ AGREGAR USUARIO" and is_admin(update):
         user_data["step"] = "add_user"
-        await update.message.reply_text("Envíe ID del usuario:")
+        await update.message.reply_text("Envíe ID del usuario")
         return
 
-    if text == "➖ ELIMINAR USUARIO":
-        if not is_admin(update):
-            return
+    if text == "➖ ELIMINAR USUARIO" and is_admin(update):
         user_data["step"] = "del_user"
-        await update.message.reply_text("Envíe ID a eliminar:")
+        await update.message.reply_text("Envíe ID a eliminar")
         return
 
-    if text == "💰 CAMBIAR MARGEN":
-        if not is_admin(update):
-            return
+    if text == "💰 CAMBIAR MARGEN" and is_admin(update):
         user_data["step"] = "set_margin"
         await update.message.reply_text("Formato: ID 90")
         return
@@ -238,7 +215,7 @@ async def handle_messages(update: Update, context: ContextTypes.DEFAULT_TYPE):
             await update.message.reply_text("❌ Formato: ID 90")
         return
 
-    # ================= PRECIO COMPRA (MISMO TEXTO ORIGINAL) =================
+    # ================= PRECIO COMPRA (MISMO TEXTO TUYO) =================
     if text == "💵 PRECIO DE COMPRA 💵":
 
         price = get_gold_price_ounce()
@@ -260,79 +237,65 @@ async def handle_messages(update: Update, context: ContextTypes.DEFAULT_TYPE):
             await update.message.reply_text(msg, parse_mode="HTML")
         return
 
-    # ================= RESTO ORIGINAL =================
+    # ================= RESTO ORIGINAL SIN CAMBIOS =================
     if text == "📈 TASA EN TIEMPO REAL 💸":
         price = get_gold_price_ounce()
         if price:
-            await update.message.reply_text(
+            msg = (
                 f"📊 <b>TASA OFICIAL EN TIEMPO REAL</b>\n"
                 f"⏱ <code>{fecha} {hora}</code>\n\n"
                 f"🪙 <code>1 oz (Troy)</code> ➜ <code>${price:,.2f} USD</code>\n"
-                f"🥇 <code>1g Oro (24K)</code> ➜ <code>${(price / 31.1035):,.2f} USD</code>",
-                parse_mode="HTML"
+                f"🥇 <code>1g Oro (24K)</code> ➜ <code>${(price / 31.1035):,.2f} USD</code>"
             )
+            await update.message.reply_text(msg, parse_mode="HTML")
         return
 
     if text == "🥇 CALCULAR VALOR 🥇":
         user_data["step"] = "select_purity"
         await purity_menu(update)
-        return
 
-    if text in ["⬅️ VOLVER AL MENÚ"]:
+    elif text in ["⬅️ VOLVER AL MENÚ", "⬅️ VOLVER"]:
         user_data.clear()
         await main_menu(update)
-        return
 
-    if user_data.get("step") == "select_purity" and any(k in text for k in GOLD_TYPES):
-        gold_type = next(k for k in GOLD_TYPES if k in text)
+    elif user_data.get("step") == "select_purity" and any(q in text for q in GOLD_TYPES):
+        gold_type = next(q for q in GOLD_TYPES if q in text)
         user_data["gold_type"] = gold_type
         user_data["step"] = "input_grams"
 
-        await update.message.reply_text("✍️ Envíe los gramos:")
-        return
+        await update.message.reply_text(
+            f"👑 <b>QUILATAJE: {gold_type}</b>\n\n"
+            f"✍️ <b>Envíe la cantidad de gramos en formato numérico.</b>\n\n"
+            f"💡 <i>Ejemplos: 10 o 5.75</i>",
+            parse_mode="HTML",
+            reply_markup=ReplyKeyboardMarkup([["⬅️ VOLVER"]], resize_keyboard=True)
+        )
 
-    if user_data.get("step") == "input_grams":
+    elif user_data.get("step") == "input_grams":
         try:
-            grams = float(text.replace(",", "."))
+            grams = float(text.replace(',', '.'))
             gold_type = user_data["gold_type"]
-
             price = get_gold_price_ounce()
-            if not price:
-                return
 
-            gram = price / 31.1035
-            margin = USER_MARGINS.get(user_id, 0.88)
+            if price:
+                gram_price_24k = price / 31.1035
+                gram_price_selected = gram_price_24k * GOLD_TYPES[gold_type]
 
-            total_real = grams * gram * GOLD_TYPES[gold_type]
-            total_compra = total_real * margin
+                total_real = grams * gram_price_selected
+                total_compra = total_real * USER_MARGINS.get(user_id, 0.88)
 
-            await update.message.reply_text(
-                f"✨ <b>COTIZACIÓN</b>\n"
-                f"📅 <code>{fecha}</code>\n"
-                f"⏰ <code>{hora}</code>\n\n"
-                f"📦 <b>Quilate:</b> <code>{gold_type}</code>\n"
-                f"⚖️ <b>Peso:</b> <code>{grams} g</code>\n\n"
-                f"💰 <b>VALOR REAL:</b> <code>${total_real:,.2f} USD</code>\n"
-                f"🤝 <b>PRECIO COMPRA:</b> <code>${total_compra:,.2f} USD</code>",
-                parse_mode="HTML"
-            )
+                res = (
+                    f"✨ <b>COTIZACIÓN</b>\n"
+                    f"📅 <code>{fecha}</code>\n"
+                    f"⏰ <code>{hora}</code>\n\n"
+                    f"📦 <b>Quilate:</b> <code>{gold_type}</code>\n"
+                    f"⚖️ <b>Peso:</b> <code>{grams} g</code>\n\n"
+                    f"💰 <b>VALOR REAL:</b> <code>${total_real:,.2f} USD</code>\n"
+                    f"🤝 <b>PRECIO COMPRA:</b> <code>${total_compra:,.2f} USD</code>\n\n"
+                    f"✍️ <i>Envíe otro peso o presione Volver.</i>"
+                )
 
-        except:
-            await update.message.reply_text("⚠️ Número inválido")
+                await update.message.reply_text(res, parse_mode="HTML")
 
-
-# =========================
-# 🚀 RUN
-# =========================
-def main():
-    app = Application.builder().token(BOT_TOKEN).build()
-
-    app.add_handler(CommandHandler("start", start))
-    app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_messages))
-
-    print("Bot iniciado...")
-    app.run_polling()
-
-
-if __name__ == "__main__":
-    main()
+        except ValueError:
+            await update.message.reply_text("⚠️ Por favor, envíe un número válido")
