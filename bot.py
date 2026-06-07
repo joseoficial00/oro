@@ -43,15 +43,17 @@ TZ_LOUISVILLE = ZoneInfo("America/Kentucky/Louisville")
 def is_authorized(update: Update):
     return update.effective_user.id in AUTHORIZED_USERS
 
+
 def is_admin(update: Update):
     return update.effective_user.id == ADMIN_ID
+
 
 async def deny(update: Update):
     await update.effective_chat.send_message("⛔ NO AUTORIZADO")
 
 
 # =========================
-# 💰 API ORO (FIX PRO)
+# 💰 API ORO (FIX)
 # =========================
 def get_gold_price_ounce():
     url = "https://www.goldapi.io/api/XAU/USD"
@@ -64,24 +66,18 @@ def get_gold_price_ounce():
         r = requests.get(url, headers=headers, timeout=10)
 
         if r.status_code != 200:
-            print("API ERROR:", r.status_code, r.text)
             return None
 
         data = r.json()
 
-        if "price" not in data:
-            print("NO PRICE:", data)
-            return None
+        return float(data.get("price", 0)) or None
 
-        return float(data["price"])
-
-    except Exception as e:
-        print("REQUEST ERROR:", e)
+    except:
         return None
 
 
 # =========================
-# 📋 MENÚ PRINCIPAL 2x2 (MISMO ESTILO)
+# 📋 MENÚ PRINCIPAL 2x2
 # =========================
 async def main_menu(update: Update):
 
@@ -124,7 +120,7 @@ async def purity_menu(update: Update):
 
 
 # =========================
-# 👑 PANEL ADMIN (BÁSICO ESTABLE)
+# 👑 PANEL ADMIN
 # =========================
 async def admin_panel(update: Update):
 
@@ -178,8 +174,8 @@ async def handle_messages(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     # ================= MENÚ =================
     if text == "👑 PANEL ADMIN":
-        await admin_panel(update)
         data.clear()
+        await admin_panel(update)
         return
 
     if text == "⬅️ VOLVER AL MENÚ":
@@ -225,7 +221,7 @@ async def handle_messages(update: Update, context: ContextTypes.DEFAULT_TYPE):
             return
 
 
-    # ================= PRECIO COMPRA (FIX) =================
+    # ================= PRECIO COMPRA =================
     if text == "💵 PRECIO DE COMPRA 💵":
 
         price = get_gold_price_ounce()
@@ -253,13 +249,13 @@ f"""💵 <b>PRECIO DE COMPRA POR GRAMO</b>
         return
 
 
-    # ================= TASA (FIX PRO) =================
+    # ================= TASA EN TIEMPO REAL =================
     if text == "📈 TASA EN TIEMPO REAL 💸":
 
         price = get_gold_price_ounce()
 
         if not price:
-            await update.message.reply_text("⚠️ Error obteniendo tasa en tiempo real")
+            await update.message.reply_text("⚠️ No se pudo obtener la tasa en este momento")
             return
 
         gram = price / 31.1035
@@ -300,7 +296,7 @@ f"""👑 <b>QUILATAJE: {gold_type}</b>
         return
 
 
-    # ================= CÁLCULO =================
+    # ================= CALCULO =================
     if data.get("step") == "grams":
         try:
             grams = float(text.replace(",", "."))
@@ -339,6 +335,7 @@ f"""✨ <b>COTIZACIÓN</b>
 # =========================
 def main():
     app = Application.builder().token(BOT_TOKEN).build()
+
     app.add_handler(CommandHandler("start", start))
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_messages))
 
