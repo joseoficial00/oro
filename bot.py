@@ -197,7 +197,7 @@ async def handle_messages(update: Update, context: ContextTypes.DEFAULT_TYPE):
             f"✍️ <b>Envíe la cantidad de gramos en formato numérico.</b>\n\n"
             f"💡 <i>Ejemplos: 10 o 5.75</i>",
             parse_mode="HTML",
-            reply_markup=ReplyKeyboardMarkup([["⬅️ VOLVER", "⬅️ VOLVER AL MENÚ"]], resize_keyboard=True)
+            reply_markup=ReplyKeyboardMarkup([["⬅️ VOLVER AL MENÚ"]], resize_keyboard=True)
         )
         return
 
