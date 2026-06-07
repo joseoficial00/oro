@@ -73,7 +73,7 @@ def get_gold_price_ounce():
 async def main_menu(update: Update):
     keyboard = [
         ["🥇 CALCULAR VALOR 🥇", "📈 TASA EN TIEMPO REAL 💸"],
-        ["💵 PRECIO DE COMPRA 💵"]
+        ["💵 PRECIO DE COMPRA 💵", " "]
     ]
 
     if is_admin(update):
@@ -94,7 +94,7 @@ async def purity_menu(update: Update):
     keyboard = [
         ["⚡ 10K", "⚡ 14K"],
         ["🌟 18K", "🏆 24K (Puro)"],
-        ["⬅️ VOLVER AL MENÚ"]
+        ["⬅️ VOLVER AL MENÚ", " "]
     ]
 
     await update.message.reply_text(
