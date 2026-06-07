@@ -72,7 +72,7 @@ def get_gold_price_ounce():
 # =========================
 async def main_menu(update: Update):
     keyboard = [
-        ["🥇 COTIZAR 🥇", "📈 TASA EN TIEMPO REAL 💸"],
+        ["🥇 CALCULAR VALOR 🥇", "📈 TASA EN TIEMPO REAL 💸"],
         ["💵 PRECIO DE COMPRA 💵"]
     ]
 
