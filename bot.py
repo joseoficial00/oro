@@ -16,8 +16,8 @@ from telegram.ext import (
 # =========================
 # 🔑 CONFIG
 # =========================
-BOT_TOKEN = os.getenv("BOT_TOKEN", "8723973833:AAFmyX4SK3DTE15fFUKu5AiofRS3QaQ2AA4")
-GOLD_API_KEY = os.getenv("GOLD_API_KEY", "goldapi-7fee400c815596e92bb2e8cf0a4d4a9f-io")
+BOT_TOKEN = os.getenv("BOT_TOKEN", "TU_BOT_TOKEN_AQUÍ")
+GOLD_API_KEY = os.getenv("GOLD_API_KEY", "TU_API_KEY_AQUÍ")
 
 ADMIN_ID = 6794562791
 
