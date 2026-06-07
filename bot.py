@@ -68,17 +68,16 @@ def get_gold_price_ounce():
 
 
 # =========================
-# 📋 MENÚ ORIGINAL
+# 📋 MENÚ 2x2 (ACTUALIZADO)
 # =========================
 async def main_menu(update: Update):
     keyboard = [
-        ["🥇 CALCULAR VALOR 🥇"],
-        ["📈 TASA EN TIEMPO REAL 💸"],
-        ["💵 PRECIO DE COMPRA 💵"]
+        ["🥇 CALCULAR VALOR 🥇", "📈 TASA EN TIEMPO REAL 💸"],
+        ["💵 PRECIO DE COMPRA 💵", " "]
     ]
 
     if is_admin(update):
-        keyboard.append(["👑 PANEL ADMIN"])
+        keyboard[1][1] = "👑 PANEL ADMIN"
 
     await update.effective_chat.send_message(
         "<b>💎 JCS GOLD CALCULATOR | PREMIUM 💎</b>\n\n"
@@ -94,9 +93,8 @@ async def main_menu(update: Update):
 async def purity_menu(update: Update):
     keyboard = [
         ["⚡ 10K", "⚡ 14K"],
-        ["🌟 18K"],
-        ["🏆 24K (Puro)"],
-        ["⬅️ VOLVER AL MENÚ"]
+        ["🌟 18K", "🏆 24K (Puro)"],
+        ["⬅️ VOLVER AL MENÚ", " "]
     ]
 
     await update.message.reply_text(
@@ -180,8 +178,8 @@ async def handle_messages(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await purity_menu(update)
         return
 
-    # ================= VOLVER (ARREGLADO) =================
-    if text in ["⬅️ VOLVER AL MENÚ"]:
+    # ================= VOLVER =================
+    if text == "⬅️ VOLVER AL MENÚ":
         user_data.clear()
         await main_menu(update)
         return
