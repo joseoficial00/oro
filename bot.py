@@ -95,10 +95,10 @@ async def handle_messages(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 f"💵 <b>PRECIO DE COMPRA POR GRAMO</b>\n"
                 f"📅 <code>{fecha}</code>\n"
                 f"⏰ <code>{hora}</code>\n\n"
-                f"🥇 <b>10K:</b> <code>${gram_price_24k * GOLD_TYPES['10K']:.2f}/g</code>\n"
-                f"🥇 <b>14K:</b> <code>${gram_price_24k * GOLD_TYPES['14K']:.2f}/g</code>\n"
-                f"🥇 <b>18K:</b> <code>${gram_price_24k * GOLD_TYPES['18K']:.2f}/g</code>\n"
-                f"🥇 <b>24K:</b> <code>${gram_price_24k * GOLD_TYPES['24K']:.2f}/g</code>"
+                f"🥇 <b>10K:</b> <code>${gram_price_24k * GOLD_TYPES['10K'] * 0.88:.2f}/g</code>\n"
+                f"🥇 <b>14K:</b> <code>${gram_price_24k * GOLD_TYPES['14K'] * 0.88:.2f}/g</code>\n"
+                f"🥇 <b>18K:</b> <code>${gram_price_24k * GOLD_TYPES['18K'] * 0.88:.2f}/g</code>\n"
+                f"🥇 <b>24K:</b> <code>${gram_price_24k * GOLD_TYPES['24K'] * 0.88:.2f}/g</code>"
             )
             await update.message.reply_text(msg, parse_mode="HTML")
         else:
@@ -150,7 +150,7 @@ async def handle_messages(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 gram_price_selected = gram_price_24k * GOLD_TYPES[gold_type]
 
                 total_real = grams * gram_price_selected
-                total_compra = total_real
+                total_compra = total_real * 0.88
 
                 res = (
                     f"✨ <b>COTIZACIÓN</b>\n"
